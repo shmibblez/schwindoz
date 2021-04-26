@@ -133,7 +133,7 @@ int CALLBACK WinMain(
 	wcexc.hInstance = hInstance;
 	wcexc.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
 	wcexc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcexc.hbrBackground = CreateSolidBrush(RGB(255, 0, 0));// default: (HBRUSH)(COLOR_WINDOW + 1);
+	wcexc.hbrBackground = CreateSolidBrush(RGB(125, 0, 0));// default: (HBRUSH)(COLOR_WINDOW + 1);
 	wcexc.lpszMenuName = NULL;
 	wcexc.lpszClassName = cWindowClass;
 	wcexc.hIconSm = LoadIcon(wcexc.hInstance, IDI_APPLICATION);
@@ -200,8 +200,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
-	TCHAR greeting[] = _T("hello, hows it goin, sjfsdfjslkjfkld");
-	TCHAR child_greeting[] = _T("nice, very epic, awesome");
+	TCHAR greeting[] = _T("hello, hows it goin");
+	TCHAR child_greeting[] = _T("nice");
 
 	switch (message)
 	{
