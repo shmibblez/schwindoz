@@ -176,7 +176,7 @@ int CALLBACK WinMain(
 	//ShowWindow(childWnd, nCmdShow);
 	//UpdateWindow(childWnd);
 
-	help::drawLolXD(&desktop_rect, cWindowClass, cTitle, hInstance, nCmdShow);
+	help::drawNice(&desktop_rect, cWindowClass, cTitle, hInstance, nCmdShow);
 
 
 	// Main message loop:
@@ -233,6 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		if (hWnd == mainWin) {
 			PostQuitMessage(0);
+			// TODO: possible to close all child windows if 1 closed?
 		}
 		break;
 	default:
