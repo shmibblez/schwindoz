@@ -80,7 +80,7 @@ int CALLBACK WinMain(
 	);
 	desktop_rect = work_area;
 
-	RECT window_rect = help::centerWindow(&work_area, 450, 200);
+	RECT window_rect = help::centerWindow(&work_area, 200, 100);
 	main_window_rect = window_rect;
 
 	// The parameters to CreateWindow explained:

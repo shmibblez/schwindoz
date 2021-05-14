@@ -7,7 +7,7 @@ namespace help {
 	RECT centerWindow(RECT* desktop, long width, long height) {
 
 		long center_x = (desktop->right - desktop->left) / 2;
-		long center_y = (desktop->bottom - desktop->top) / 2;
+		long center_y = (desktop->bottom - desktop->top) / 4;
 		long half_width = width / 2;
 		long half_height = height / 2;
 
@@ -28,22 +28,32 @@ namespace help {
 		Wins handles;
 
 		pen::Letters letters = {
+			// nice not working, windows too close to each other get drawn on same line
+			// could draw them out of order (first N line, then I line,..., then back to second N line, etc.)
+			// to see if anything changes, but fukin no thanks
+			// might come back to this, but probably not, or maybe actually, but probably not
+			/*
 			pen::LetterPresets::N,
 			pen::LetterPresets::I,
 			pen::LetterPresets::C,
+			pen::LetterPresets::E,*/
+			// gave up with NICE, fell back on timeless classic EEEE
+			pen::LetterPresets::E,
+			pen::LetterPresets::E,
+			pen::LetterPresets::E,
 			pen::LetterPresets::E,
 		};
 
 		pen::PARM initialBounds = pen::PARM();
 
-		double unscaledPadding = 0.5;
+		double unscaledPadding = 1.0;
 		pen::PARM unscaledBoundingPARM = pen::calculateBoundingParallelogram(letters.size(), 1, unscaledPadding);
 		double unscaledWidth = unscaledBoundingPARM.width();
 		double unscaledHeight = unscaledBoundingPARM.height();
 		double wordSizeRatio = unscaledWidth / unscaledHeight;
 
-		double screenWidth = workspace->right - workspace->left;
-		double screenHeight = workspace->top - workspace->bottom;
+		double screenWidth = double(workspace->right) - double(workspace->left);
+		double screenHeight = double(workspace->bottom) - double(workspace->top);
 		double screenRatio = screenWidth / screenHeight;
 
 		// determine which dimension limits scale factor
@@ -54,14 +64,14 @@ namespace help {
 
 		if (wordSizeRatio < screenRatio) {
 			// if screen height limits bounds
-			letterScale = screenHeight / unscaledHeight;
+			letterScale = (screenHeight / unscaledHeight) / 1;
 		}
 		else {
 			// if screen width limits bounds
-			letterScale = screenWidth / unscaledWidth;
+			letterScale = (screenWidth / unscaledWidth) / 1.45;
 		}
 
-		double pointsPerUnit = 6 / ((2 / 3) * letterScale); // means window will be drawn every this many pixels (6 windows per unit in this case)
+		double pointsPerUnit = 0.05;//6.0 / ((2.0 / 3.0) * letterScale); // means window will be drawn every this many pixels (6 windows per unit in this case)
 
 		pen::scaleLetters(letters, letterScale);
 		double scaledPadding = unscaledPadding * letterScale; // determines padding between letters in px
@@ -73,17 +83,23 @@ namespace help {
 		pen::PARM scaledPARM = pen::calculateBoundingParallelogram(letters.size(), letterScale, scaledPadding);
 		// horizontal offset of letter's bottom left corner
 		double initialblHorzOffset = workspace->right - (screenWidth / 2) - (scaledPARM.width() / 2);
-		double initialblVertOffset = workspace->top - (screenHeight / 2) - (scaledPARM.height() / 2);
+		double initialblVertOffset = workspace->bottom - (screenHeight / 2) - (scaledPARM.height() / 2);
 		double blHorzOffset = 0;
+		double halfway = workspace->top + (screenHeight / 2);
+		double letterHeight = scaledPARM.height();
+		double halfLetterHeight = letterHeight / 2;
+		double letterBaseLength = (2.0 / 3.0) * letterScale;
 		for (int i = 0; i < letterPoints.size(); i++) {
-			blHorzOffset = initialblHorzOffset + i * (2 / 3) * letterScale + (i - 1) * scaledPadding;
+			blHorzOffset = initialblHorzOffset + i * letterBaseLength + i * scaledPadding;
 			for (int l = 0; l < letterPoints[i].size(); l++) {
+				// flips y (since y coordinates increase from top to bottom of screen) and adds center offset
+				double flippedY = letterHeight - letterPoints[i][l].y + initialblVertOffset;
 				HWND childWnd = CreateWindow(
 					winClass,
 					winTitle,
 					WS_OVERLAPPEDWINDOW,
-					letterPoints[i][l].x + blHorzOffset, letterPoints[i][l].y + initialblVertOffset,
-					100, 100,
+					letterPoints[i][l].x + blHorzOffset, flippedY,
+					1, 1,
 					NULL,
 					NULL,
 					hInstance,
@@ -151,22 +167,23 @@ namespace pen {
 	}
 	Points Line::interpolate(double pointsPerUnit, bool includeFirst, bool includeLast) const {
 		Points ps;
-		int numPoints = pointsPerUnit * this->length();
+		// TODO: improve number of points
+		int numPoints = 15;//pointsPerUnit * this->length();
 
-		if (includeFirst)
-			ps.push_back(this->start);
+		//if (includeFirst)
+		ps.push_back(this->start);
 		for (int i = 1; i < numPoints; i++) {
-			double x = std::abs((this->end.x - this->start.x) / numPoints) * i;
-			double y = std::abs((this->end.y - this->start.y) / numPoints) * i;
+			double x = std::abs((this->end.x - this->start.x) / numPoints) * double(i);
+			double y = std::abs((this->end.y - this->start.y) / numPoints) * double(i);
 			ps.push_back(Point(x, y));
 		}
-		if (includeLast)
-			ps.push_back(this->end);
+		//if (includeLast)
+		ps.push_back(this->end);
 		return ps;
 	}
 	void Point::scale(double by) {
-		this->x = this->x * by;
-		this->y = this->y * by;
+		this->x *= by;
+		this->y *= by;
 	}
 	void Letter::scale(double by) {
 		double scaleFactor = by / this->scaled;
@@ -186,7 +203,7 @@ namespace pen {
 		}
 		return ps;
 	}
-	LetterPoints Letter::interpolateLetters(Letters letters, double pointsPerUnit) {
+	LetterPoints Letter::interpolateLetters(Letters& letters, double pointsPerUnit) {
 		LetterPoints ps;
 		for (int i = 0; i < letters.size(); i++) {
 			//Points lps = letters[i].interpolate(pointsPerUnit);
@@ -197,26 +214,29 @@ namespace pen {
 	}
 	const Letter LetterPresets::N = Letter({
 		Line(Point(0,0), Point(1.0 / 3.0, 1)),
-		Line(Point(1.0 / 3.0, 1.0), Point(2.0 / 3.0, 0.0)),
+		Line(Point(1.0 / 3.0, 1.0), Point(2.0 / 3.0, 1.0)),
+		Line(Point(1.0 / 3.0, 0.0), Point(2.0 / 3.0, 1.0)),
+		Line(Point(1.0 / 3.0, 0.0), Point(2.0 / 3.0, 0.0)),
 		Line(Point(2.0 / 3.0, 0.0), Point(1.0, 1.0)),
 		});
 	const Letter LetterPresets::I = Letter({
 		Line(Point(1.0 / 3.0, 1.0), Point(1.0 , 1.0)),
-		Line(Point(2.0 / 3.0, 1.0), Point(1.0 / 3.0, 0.0)),
+		Line(Point(1.0 / 3.0, 0.0),Point(2.0 / 3.0, 1.0)),
 		Line(Point(0, 0), Point(2.0 / 3.0, 0)),
 		});
 	const Letter LetterPresets::C = Letter({
-		Line(Point(2.0 / 3.0, 0.0), Point(0.0 , 0.0)),
+		Line(Point(0.0 , 0.0),Point(2.0 / 3.0, 0.0)),
 		Line(Point(0.0, 0.0), Point(1.0 / 3.0, 1.0)),
 		Line(Point(1.0 / 3.0, 1.0), Point(1.0, 1.0)),
 		});
 	const Letter LetterPresets::E = Letter({
-		Line(Point(1.0, 1.0), Point(1.0 / 3.0 , 1.0)),
-		Line(Point(5.0 / 6.0, 0.5), Point(1.0 / 6.0, 0.5)),
-		Line(Point(1.0 / 3.0, 0.0), Point(0.0, 0.0)),
+		Line(Point(0.0 , 0.0), Point(1.0 / 3.0, 1.0)),
+		Line(Point(1.0 / 3.0 , 1.0), Point(1.0, 1.0)),
+		Line(Point(1.0 / 6.0, 0.5), Point(5.0 / 6.0, 0.5)),
+		Line(Point(0.0, 0.0),  Point(2.0 / 3.0, 0.0))
 		});
 
-	void pen::scaleLetters(Letters letters, double by) {
+	void pen::scaleLetters(Letters& letters, double by) {
 		for (int i = 0; i < letters.size(); i++) {
 			letters[i].scale(by);
 		}
@@ -228,13 +248,14 @@ namespace pen {
 		// - lr: (2/3, 0)
 		// - tr: (1  , 1)
 		// 2/3 since that's base width of all letters
-		int horizontalSideLength = (2 / 3) * numLetters * scale + (numLetters - 1) * padding;
+		int horizontalSideLength = (2.0 / 3.0) * numLetters * scale + (numLetters)*padding;
 		int parmHeight = scale;
-		return PARM(
+		PARM n = PARM(
 			Point(0, 0),
 			Point((1 / 3) * scale, parmHeight),
 			Point((1 / 3) * scale + horizontalSideLength, parmHeight),
 			Point(horizontalSideLength, 0)
 		);
+		return n;
 	}
 }

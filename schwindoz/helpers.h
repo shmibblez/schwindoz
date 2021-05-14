@@ -17,6 +17,25 @@ namespace help {
 }
 
 namespace pen {
+	class Point {
+	public:
+		double x;
+		double y;
+
+		Point(double x, double y) : x(x), y(y) {}
+
+		/*
+		* @param p1
+		* @param p2
+		* @returns distance between point 1 & 2
+		*/
+		double distance(Point p2) const;
+		/*
+		* @param by amount to scale by
+		* scales the vector associated with the point, so pretty much multiplies its coordinates by [by]
+		*/
+		void scale(double by);
+	};
 	// parallelogram, used for bounding information for letters and letter groups
 	// not used by letters because would require scaling these too when letters are scaled, plus they're not really used
 	class PARM {
@@ -49,25 +68,6 @@ namespace pen {
 		*/
 		double height() const;
 
-	};
-	class Point {
-	public:
-		double x;
-		double y;
-
-		Point(double x, double y) : x(x), y(y) {}
-
-		/*
-		* @param p1
-		* @param p2
-		* @returns distance between point 1 & 2
-		*/
-		double distance(Point p2) const;
-		/*
-		* @param by amount to scale by
-		* scales the vector associated with the point, so pretty much multiplies its coordinates by [by]
-		*/
-		void scale(double by);
 	};
 	typedef std::vector<Point> Points;
 	typedef std::vector<Points> LetterPoints;
@@ -112,7 +112,7 @@ namespace pen {
 		*/
 		Points interpolate(double pointsPerUnit) const;
 
-		static LetterPoints interpolateLetters(Letters letters, double pointsPerUnit);
+		static LetterPoints interpolateLetters(Letters& letters, double pointsPerUnit);
 	};
 
 	class LetterPresets {
@@ -127,7 +127,7 @@ namespace pen {
 	* @param amount to scale [letters] by
 	* scales [letters] by [by]
 	*/
-	void scaleLetters(Letters letters, double by);
+	void scaleLetters(Letters& letters, double by);
 
 	/*
 	* @param numLetters number of letters in word
